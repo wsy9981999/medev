@@ -7,7 +7,6 @@ import (
 	"github.com/gogf/gf/v2/errors/gerror"
 	"github.com/gogf/gf/v2/frame/g"
 	"github.com/gogf/gf/v2/os/gfile"
-	"github.com/gogf/gf/v2/os/gproc"
 	"medev/utils/mlog"
 	"medev/utils/proc"
 )
@@ -60,41 +59,13 @@ func (receiver *cMeDevInit) initGit(ctx context.Context, name string) error {
 		mlog.Fatalf("%+v", gerror.NewCode(gcode.CodeNotFound, "'git' no found"))
 
 	}
-	err := run(ctx, []string{
-		"git init",
-		"git add -A",
-		"git commit -m \"Initial Git Commit\"",
-	}, gfile.Join(gfile.Pwd(), name))
-	if err != nil {
-		return err
-	}
-	return nil
-}
-func run(ctx context.Context, cmd any, path string) error {
-	switch t := cmd.(type) {
-	case string:
-		return runSlice(ctx, []string{t}, path)
-	case []string:
-		return runSlice(ctx, t, path)
-	default:
+	q := gfile.Join(gfile.Pwd(), name)
+	return proc.Run(ctx, [][]string{
+		{"git init", q},
+		{"git add -A", q},
+		{"git commit -m \"Initial Git Commit\"", q},
+	}, true)
 
-	}
-	return nil
-}
-func runSlice(ctx context.Context, cmds []string, path string) error {
-	for _, cmd := range cmds {
-		g.Log().Debugf(ctx, "run cmd:%s", cmd)
-		processCmd := gproc.NewProcessCmd(cmd)
-		processCmd.Stdout = nil
-		processCmd.Stderr = nil
-		processCmd.Stdin = nil
-		processCmd.Dir = path
-		err := processCmd.Run(ctx)
-		if err != nil {
-			return err
-		}
-	}
-	return nil
 }
 
 func (receiver *cMeDevInit) initGoFrame(ctx context.Context, name string) error {
@@ -102,15 +73,12 @@ func (receiver *cMeDevInit) initGoFrame(ctx context.Context, name string) error 
 
 		mlog.Fatalf("%+v", gerror.NewCode(gcode.CodeNotFound, "'gf' no found"))
 	}
-	err := run(ctx, []string{"gf init backend -u"}, gfile.Join(gfile.Pwd(), name))
-	if err != nil {
-		return err
-	}
-	err = run(ctx, []string{"go mod tidy"}, gfile.Join(gfile.Pwd(), name, "backend"))
-	if err != nil {
-		return err
-	}
-	return nil
+	base := gfile.Join(gfile.Pwd(), name)
+
+	return proc.Run(ctx, [][]string{
+		{"gf init backend -u", base},
+		{"go mod tidy", gfile.Join(base, "backend")},
+	}, true)
 }
 
 func (receiver *cMeDevInit) initFrontend(ctx context.Context, name string) error {
@@ -118,18 +86,28 @@ func (receiver *cMeDevInit) initFrontend(ctx context.Context, name string) error
 	if pm == "" {
 		mlog.Fatalf("%+v", gerror.NewCode(gcode.CodeNotFound, "frontend package manager no found"))
 	}
-	err := run(ctx, []string{
-		fmt.Sprintf("%s create vue --bare --ts --router --jsx --pinia --vitest --eslint  --eslint-with-oxlint   --prettier frontend", pm),
-	}, gfile.Join(gfile.Pwd(), name))
-
-	if err != nil {
-		return err
-	}
-	err = run(ctx, []string{
-		fmt.Sprintf("%s install", pm), fmt.Sprintf("%s add alova", pm), fmt.Sprintf("%s add -D  @alova/wormhole", pm),
-	}, gfile.Join(gfile.Pwd(), name, "frontend"))
-	if err != nil {
-		return err
-	}
-	return nil
+	base := gfile.Join(gfile.Pwd(), name)
+	fb := gfile.Join(base, "frontend")
+	return proc.Run(ctx, [][]string{
+		{
+			fmt.Sprintf("%s create vue --bare --ts --router --jsx --pinia --vitest --eslint  --eslint-with-oxlint   --prettier frontend", pm),
+			base,
+		},
+		{
+			fmt.Sprintf("%s install", pm),
+			fb,
+		},
+		{
+			fmt.Sprintf("%s add alova", pm),
+			fb,
+		},
+		{
+			fmt.Sprintf("%s add -D  @alova/wormhole", pm),
+			fb,
+		},
+		{
+			fmt.Sprintf("%s run alova init", pm),
+			fb,
+		},
+	}, true)
 }

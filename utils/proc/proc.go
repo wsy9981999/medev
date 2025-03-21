@@ -1,74 +1,139 @@
 package proc
 
 import (
-	"github.com/gogf/gf/v2/os/gctx"
+	"context"
+	"github.com/gogf/gf/v2/errors/gcode"
+	"github.com/gogf/gf/v2/errors/gerror"
+	"github.com/gogf/gf/v2/frame/g"
+	"github.com/gogf/gf/v2/os/gfile"
 	"github.com/gogf/gf/v2/os/gproc"
-	"github.com/gogf/gf/v2/os/gstructs"
-	"reflect"
-	"sync"
+	"github.com/gogf/gf/v2/os/grpool"
+	"github.com/gogf/gf/v2/util/gmode"
+	"io"
 )
 
-var ProcExistInstance = NewProcExist()
-
-type ProcExist struct {
-	Git  bool `json:"git,omitempty" name:"git" cmd:"git -v"`
-	Gf   bool `json:"gf,omitempty" name:"gf" cmd:"gf -v"`
-	Bun  bool `json:"bun,omitempty" name:"bun" cmd:"bun -v"`
-	Pnpm bool `json:"pnpm,omitempty" name:"pnpm" cmd:"pnpm -v"`
-	Npm  bool `json:"npm,omitempty"  name:"npm" cmd:"npm -v"`
-	Yarn bool `json:"yarn,omitempty"  name:"yarn" cmd:"yarn -v"`
-}
-
-func NewProcExist() *ProcExist {
-	p := &ProcExist{}
-	field, err := gstructs.TagMapName(p, []string{"cmd"})
-	if err != nil {
-		return nil
+func Run(ctx context.Context, q any, seq ...bool) error {
+	_seq := false
+	if len(seq) > 0 {
+		_seq = seq[0]
 	}
-	pp := reflect.ValueOf(p).Elem()
-	wg := new(sync.WaitGroup)
-	wg.Add(len(field))
-	for cmd := range field {
-		//fmt.Printf("out:%p,%p\n", &x, &f)
-		processCmd := gproc.NewProcessCmd(cmd)
-		processCmd.Stdout = nil
-		processCmd.Stderr = nil
-		processCmd.Stdin = nil
-		tf := pp.FieldByName(field[cmd])
-		go func(tf reflect.Value, q *gproc.Process) {
-			//fmt.Printf("in:%p\n", &f)
-			defer wg.Done()
 
-			err := processCmd.Run(gctx.New())
+	obj, err := transformToProcessObj(q)
+	if err != nil {
+		return err
+	}
+	if _seq {
+
+		for _, process := range obj {
+			logCmd(ctx, process)
+			err := process.Run(ctx)
 			if err != nil {
-				return
+				return err
 			}
-			tf.SetBool(processCmd.ProcessState.ExitCode() == 0)
-		}(tf, processCmd)
-	}
-	wg.Wait()
-
-	return p
-}
-
-func (receiver *ProcExist) DefaultFrontendPm() string {
-	f := []string{"bun", "pnpm", "yarn", "npm"}
-
-	field, err := gstructs.TagMapField(receiver, []string{"name"})
-	if err != nil {
-		return ""
-	}
-	for _, f2 := range f {
-		if field[f2].Value.Bool() {
-			return f2
 		}
+
+	} else {
+		p := grpool.New()
+		var _err error
+
+		for _, process := range obj {
+			p.Add(ctx, func(ctx context.Context) {
+				logCmd(ctx, process)
+				if _err != nil {
+					return
+				}
+				_err = process.Run(ctx)
+			})
+		}
+		p.Close()
+		return _err
 	}
 
-	return ""
+	return nil
 }
-func (receiver *ProcExist) ExistGfCli() bool {
-	return receiver.Gf
+func RunSingle(ctx context.Context, q string, path ...string) (int, error) {
+	cmd := BuildProc(q, func(p *gproc.Process) {
+		if len(path) > 0 {
+			p.Dir = path[0]
+		}
+	})
+
+	logCmd(ctx, cmd)
+	start, err := cmd.Start(ctx)
+	if err != nil {
+		return 0, err
+	}
+	err = cmd.Wait()
+	if err != nil {
+		return 0, err
+	}
+	return start, nil
+
 }
-func (receiver *ProcExist) ExistGitCli() bool {
-	return receiver.Git
+
+type Opt func(p *gproc.Process)
+
+func BuildProc(cmd string, opts ...Opt) *gproc.Process {
+	processCmd := gproc.NewProcessCmd(cmd)
+	processCmd.Stdin = nil
+	processCmd.Stdout = nil
+	processCmd.Stderr = nil
+	processCmd.Dir = gfile.Pwd()
+	for _, opt := range opts {
+		opt(processCmd)
+	}
+	logCmd(context.TODO(), processCmd)
+	return processCmd
+}
+func WithStdin(r io.Reader) Opt {
+	return func(p *gproc.Process) {
+		p.Stdin = r
+	}
+}
+func WithStdout(r io.Writer) Opt {
+	return func(p *gproc.Process) {
+		p.Stdout = r
+	}
+}
+func WithStderr(r io.Writer) Opt {
+	return func(p *gproc.Process) {
+		p.Stderr = r
+	}
+}
+func WithDir(r string) Opt {
+	return func(p *gproc.Process) {
+		p.Dir = r
+	}
+}
+
+func logCmd(ctx context.Context, p *gproc.Process) {
+	if p != nil && !gmode.IsProduct() {
+		g.Log().Debugf(ctx, "Run `%s` in `%s`", p.String(), p.Dir)
+	}
+}
+func transformToProcessObj(q any) ([]*gproc.Process, error) {
+	switch x := q.(type) {
+	case *gproc.Process:
+		return []*gproc.Process{x}, nil
+	case []*gproc.Process:
+		return x, nil
+
+	case string:
+		return []*gproc.Process{BuildProc(x)}, nil
+	case []string:
+		processes := make([]*gproc.Process, len(x))
+		for i := range x {
+			processes[i] = BuildProc(x[i])
+		}
+		return processes, nil
+	case [][]string:
+		processes := make([]*gproc.Process, len(x))
+		for i := range x {
+			processes[i] = BuildProc(x[i][0], WithDir(x[i][1]))
+		}
+		return processes, nil
+	default:
+		return nil, gerror.NewCode(gcode.CodeInvalidParameter, "请提供[]*gproc.Process,*gproc.Process,string,[]string的参数")
+
+	}
 }
