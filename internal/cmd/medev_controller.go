@@ -43,7 +43,7 @@ func (cmd *cMeDevController) Index(ctx context.Context, in cMeDevControllerInput
 	if err != nil {
 		return nil, err
 	}
-	apiFile := gfile.Join(selectDir(), "api", in.Module, in.Version, gstr.CaseSnake(in.Name)+".go")
+	apiFile := gfile.Join(str.SelectBackend(), "api", in.Module, in.Version, gstr.CaseSnake(in.Name)+".go")
 	if gfile.Exists(apiFile) {
 		if in.Force {
 			err = gfile.PutContents(apiFile, content)
@@ -64,16 +64,9 @@ func (cmd *cMeDevController) Index(ctx context.Context, in cMeDevControllerInput
 
 		mlog.Fatalf("%+v", gerror.NewCode(gcode.CodeNotFound, "'gf' no found"))
 	}
-	err = proc.BuildProc("gf gen ctrl", proc.WithDir(selectDir())).Run(ctx)
+	err = proc.BuildProc("gf gen ctrl", proc.WithDir(str.SelectBackend())).Run(ctx)
 
 	return
-}
-
-func selectDir() string {
-	if gfile.Exists("backend") && gfile.IsDir("backend") {
-		return gfile.Join(gfile.Pwd(), "backend")
-	}
-	return gfile.Pwd()
 }
 
 func buildTag(in cMeDevControllerInput) string {

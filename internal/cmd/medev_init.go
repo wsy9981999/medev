@@ -9,6 +9,7 @@ import (
 	"github.com/gogf/gf/v2/os/gfile"
 	"medev/utils/mlog"
 	"medev/utils/proc"
+	"medev/utils/str"
 )
 
 var MeDevInit = cMeDevInit{}
@@ -77,7 +78,7 @@ func (receiver *cMeDevInit) initGoFrame(ctx context.Context, name string) error 
 
 	return proc.Run(ctx, [][]string{
 		{"gf init backend -u", base},
-		{"go mod tidy", gfile.Join(base, "backend")},
+		{"go mod tidy", str.SelectBackend()},
 	}, true)
 }
 
@@ -87,7 +88,6 @@ func (receiver *cMeDevInit) initFrontend(ctx context.Context, name string) error
 		mlog.Fatalf("%+v", gerror.NewCode(gcode.CodeNotFound, "frontend package manager no found"))
 	}
 	base := gfile.Join(gfile.Pwd(), name)
-	fb := gfile.Join(base, "frontend")
 	return proc.Run(ctx, [][]string{
 		{
 			fmt.Sprintf("%s create vue --bare --ts --router --jsx --pinia --vitest --eslint  --eslint-with-oxlint   --prettier frontend", pm),
@@ -95,19 +95,19 @@ func (receiver *cMeDevInit) initFrontend(ctx context.Context, name string) error
 		},
 		{
 			fmt.Sprintf("%s install", pm),
-			fb,
+			str.SelectFrontend(),
 		},
 		{
 			fmt.Sprintf("%s add alova", pm),
-			fb,
+			str.SelectFrontend(),
 		},
 		{
 			fmt.Sprintf("%s add -D  @alova/wormhole", pm),
-			fb,
+			str.SelectFrontend(),
 		},
 		{
 			fmt.Sprintf("%s run alova init", pm),
-			fb,
+			str.SelectFrontend(),
 		},
 	}, true)
 }
