@@ -51,7 +51,7 @@ func (cmd *cMeDevController) Index(ctx context.Context, in cMeDevControllerInput
 				return
 			}
 		} else {
-			g.Log().Info(ctx, "api file already exists")
+			mlog.Info("api file already exists")
 			return
 
 		}

@@ -32,18 +32,18 @@ func (receiver *cMeDevInit) Init(ctx context.Context, in cMeDevInitInput) (out *
 	if err != nil {
 		return nil, err
 	}
-	g.Log().Info(ctx, "初始化goframe")
+	mlog.Info("初始化goframe")
 	err = receiver.initGoFrame(ctx, in.Name)
 	if err != nil {
 		return nil, err
 	}
-	g.Log().Info(ctx, "初始化前端")
+	mlog.Info("初始化前端")
 	err = receiver.initFrontend(ctx, in.Name)
 	if err != nil {
 		return nil, err
 	}
 	if in.Git {
-		g.Log().Info(ctx, "初始化git")
+		mlog.Info("初始化git")
 
 		err = receiver.initGit(ctx, in.Name)
 		if err != nil {
@@ -66,7 +66,6 @@ func (receiver *cMeDevInit) initGit(ctx context.Context, name string) error {
 		{"git add -A", q},
 		{"git commit -m \"Initial Git Commit\"", q},
 	}, true)
-
 }
 
 func (receiver *cMeDevInit) initGoFrame(ctx context.Context, name string) error {

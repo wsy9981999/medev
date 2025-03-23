@@ -17,3 +17,9 @@ func Info(q ...any) {
 	g.Log().Info(ctx, q...)
 
 }
+func Printf(fmt string, q ...any) {
+	g.Log().Printf(ctx, fmt, q...)
+}
+func Debugf(fmt string, q ...any) {
+	g.Log().Debugf(ctx, fmt, q)
+}

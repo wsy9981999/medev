@@ -2,7 +2,11 @@ module medev
 
 go 1.24.1
 
-require github.com/gogf/gf/v2 v2.9.0
+require (
+	github.com/gogf/gf v1.16.9
+	github.com/gogf/gf/v2 v2.9.0
+	golang.org/x/tools v0.21.1-0.20240508182429-e35e4ccd0d2d
+)
 
 require (
 	github.com/BurntSushi/toml v1.4.0 // indirect
@@ -26,6 +30,7 @@ require (
 	go.opentelemetry.io/otel/metric v1.32.0 // indirect
 	go.opentelemetry.io/otel/sdk v1.32.0 // indirect
 	go.opentelemetry.io/otel/trace v1.32.0 // indirect
+	golang.org/x/mod v0.17.0 // indirect
 	golang.org/x/net v0.32.0 // indirect
 	golang.org/x/sys v0.28.0 // indirect
 	golang.org/x/text v0.21.0 // indirect

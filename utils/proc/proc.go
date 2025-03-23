@@ -4,12 +4,12 @@ import (
 	"context"
 	"github.com/gogf/gf/v2/errors/gcode"
 	"github.com/gogf/gf/v2/errors/gerror"
-	"github.com/gogf/gf/v2/frame/g"
 	"github.com/gogf/gf/v2/os/gfile"
 	"github.com/gogf/gf/v2/os/gproc"
 	"github.com/gogf/gf/v2/os/grpool"
 	"github.com/gogf/gf/v2/util/gmode"
 	"io"
+	"medev/utils/mlog"
 )
 
 func Run(ctx context.Context, q any, seq ...bool) error {
@@ -108,7 +108,7 @@ func WithDir(r string) Opt {
 
 func logCmd(ctx context.Context, p *gproc.Process) {
 	if p != nil && !gmode.IsProduct() {
-		g.Log().Debugf(ctx, "Run `%s` in `%s`", p.String(), p.Dir)
+		mlog.Debugf("Run `%s` in `%s`", p.String(), p.Dir)
 	}
 }
 func transformToProcessObj(q any) ([]*gproc.Process, error) {

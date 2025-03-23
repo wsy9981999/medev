@@ -6,10 +6,10 @@ import (
 	"github.com/gogf/gf/v2/frame/g"
 )
 
-type {{ ucfist .Name }}Req struct{
+type {{ ucfirst .Name }}Req struct{
 	g.Meta {{ .Tag }}
 }
-type {{ ucfist .Name }}Res struct{
+type {{ ucfirst .Name }}Res struct{
 	
 }
 `
