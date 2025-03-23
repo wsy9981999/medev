@@ -3,7 +3,6 @@ module medev
 go 1.24.1
 
 require (
-	github.com/gogf/gf v1.16.9
 	github.com/gogf/gf/v2 v2.9.0
 	golang.org/x/tools v0.21.1-0.20240508182429-e35e4ccd0d2d
 )

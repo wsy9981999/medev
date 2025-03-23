@@ -7,6 +7,7 @@ import (
 	"github.com/gogf/gf/v2/errors/gerror"
 	"github.com/gogf/gf/v2/frame/g"
 	"github.com/gogf/gf/v2/os/gfile"
+	"github.com/gogf/gf/v2/os/gres"
 	"medev/utils/mlog"
 	"medev/utils/proc"
 	"medev/utils/str"
@@ -87,26 +88,12 @@ func (receiver *cMeDevInit) initFrontend(ctx context.Context, name string) error
 		mlog.Fatalf("%+v", gerror.NewCode(gcode.CodeNotFound, "frontend package manager no found"))
 	}
 	base := gfile.Join(gfile.Pwd(), name)
-	return proc.Run(ctx, [][]string{
-		{
-			fmt.Sprintf("%s create vue --bare --ts --router --jsx --pinia --vitest --eslint  --eslint-with-oxlint   --prettier frontend", pm),
-			base,
-		},
-		{
-			fmt.Sprintf("%s install", pm),
-			str.SelectFrontend(),
-		},
-		{
-			fmt.Sprintf("%s add alova", pm),
-			str.SelectFrontend(),
-		},
-		{
-			fmt.Sprintf("%s add -D  @alova/wormhole", pm),
-			str.SelectFrontend(),
-		},
-		{
-			fmt.Sprintf("%s run alova init", pm),
-			str.SelectFrontend(),
-		},
-	}, true)
+
+	err := gres.Export("frontend-stage", gfile.Join(base, "frontend"), gres.ExportOption{RemovePrefix: "frontend-stage"})
+	if err != nil {
+		return err
+	}
+	return proc.BuildProc(fmt.Sprintf("%s install", pm), proc.WithDir(gfile.Join(base, "frontend"))).Run(ctx)
+
+	//packed
 }

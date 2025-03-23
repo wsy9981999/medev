@@ -25,7 +25,7 @@ func Run(ctx context.Context, q any, seq ...bool) error {
 	if _seq {
 
 		for _, process := range obj {
-			logCmd(ctx, process)
+			logCmd(process)
 			err := process.Run(ctx)
 			if err != nil {
 				return err
@@ -38,7 +38,7 @@ func Run(ctx context.Context, q any, seq ...bool) error {
 
 		for _, process := range obj {
 			p.Add(ctx, func(ctx context.Context) {
-				logCmd(ctx, process)
+				logCmd(process)
 				if _err != nil {
 					return
 				}
@@ -58,7 +58,7 @@ func RunSingle(ctx context.Context, q string, path ...string) (int, error) {
 		}
 	})
 
-	logCmd(ctx, cmd)
+	logCmd(cmd)
 	start, err := cmd.Start(ctx)
 	if err != nil {
 		return 0, err
@@ -82,7 +82,7 @@ func BuildProc(cmd string, opts ...Opt) *gproc.Process {
 	for _, opt := range opts {
 		opt(processCmd)
 	}
-	logCmd(context.TODO(), processCmd)
+	logCmd(processCmd)
 	return processCmd
 }
 func WithStdin(r io.Reader) Opt {
@@ -106,7 +106,7 @@ func WithDir(r string) Opt {
 	}
 }
 
-func logCmd(ctx context.Context, p *gproc.Process) {
+func logCmd(p *gproc.Process) {
 	if p != nil && !gmode.IsProduct() {
 		mlog.Debugf("Run `%s` in `%s`", p.String(), p.Dir)
 	}

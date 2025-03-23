@@ -2,6 +2,7 @@ package main
 
 import (
 	"medev/internal/cmd"
+	_ "medev/internal/packed"
 	"medev/utils/mlog"
 
 	"github.com/gogf/gf/v2/frame/g"

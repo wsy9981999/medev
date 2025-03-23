@@ -21,5 +21,5 @@ func Printf(fmt string, q ...any) {
 	g.Log().Printf(ctx, fmt, q...)
 }
 func Debugf(fmt string, q ...any) {
-	g.Log().Debugf(ctx, fmt, q)
+	g.Log().Debugf(ctx, fmt, q...)
 }
