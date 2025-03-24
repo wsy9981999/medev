@@ -10,7 +10,6 @@ import (
 	"github.com/gogf/gf/v2/os/gres"
 	"medev/utils/mlog"
 	"medev/utils/proc"
-	"medev/utils/str"
 )
 
 var MeDevInit = cMeDevInit{}
@@ -78,7 +77,7 @@ func (receiver *cMeDevInit) initGoFrame(ctx context.Context, name string) error 
 
 	return proc.Run(ctx, [][]string{
 		{"gf init backend -u", base},
-		{"go mod tidy", str.SelectBackend()},
+		{"go mod tidy", gfile.Join(base, "backend")},
 	}, true)
 }
 
