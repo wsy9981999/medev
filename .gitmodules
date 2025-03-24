@@ -1,0 +1,3 @@
+[submodule "frontend-stage"]
+	path = frontend-stage
+	url = https://github.com/wsy9981999/frontend-stage.git
