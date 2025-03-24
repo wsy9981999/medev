@@ -93,6 +93,7 @@ func (receiver *cMeDevInit) initFrontend(ctx context.Context, name string) error
 	if err != nil {
 		return err
 	}
+	gfile.RemoveAll(gfile.Join(base, "frontend", ".git"))
 	return proc.BuildProc(fmt.Sprintf("%s install", pm), proc.WithDir(gfile.Join(base, "frontend"))).Run(ctx)
 
 	//packed
